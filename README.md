@@ -53,7 +53,7 @@ This app is configured for **Vercel** deployment with **MongoDB Atlas** as the d
 ### Quick Deploy to Vercel
 
 1. **Prerequisites:**
-   - Push your code to GitHub
+   - Push your code to GitHubjj
    - Get an OpenRouter API key from [openrouter.ai](https://openrouter.ai)
    - Create a free MongoDB Atlas cluster at [mongodb.com](https://www.mongodb.com/cloud/atlas/register)
 
