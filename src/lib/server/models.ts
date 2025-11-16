@@ -164,7 +164,7 @@ const getModelOverrides = (): ModelOverride[] => {
 		if (sanitized === "[" || sanitized === "{" || sanitized.trim() === "") {
 			logger.warn(
 				"[models] MODELS environment variable is incomplete or malformed. Using empty array. " +
-				"In Vercel, check that the environment variable is properly formatted as a JSON array."
+					"In Vercel, check that the environment variable is properly formatted as a JSON array."
 			);
 			return [];
 		}
@@ -175,8 +175,8 @@ const getModelOverrides = (): ModelOverride[] => {
 		logger.error(
 			error,
 			"[models] Failed to parse MODELS overrides. " +
-			"Ensure the MODELS environment variable is valid JSON5. " +
-			"Example: MODELS=[{\"id\":\"model-1\",\"name\":\"Model 1\"}]"
+				"Ensure the MODELS environment variable is valid JSON5. " +
+				'Example: MODELS=[{"id":"model-1","name":"Model 1"}]'
 		);
 		return [];
 	}
@@ -323,91 +323,113 @@ const buildModels = async (): Promise<ProcessedModel[]> => {
 		const baseURL = openaiBaseUrl;
 		logger.info({ baseURL }, "[models] Using OpenAI-compatible base URL");
 
-		// Canonical auth token is OPENAI_API_KEY; keep HF_TOKEN as legacy alias
-		const authToken = config.OPENAI_API_KEY || config.HF_TOKEN;
-
-		// Use auth token from the start if available to avoid rate limiting issues
-		// Some APIs rate-limit unauthenticated requests more aggressively
-		const response = await fetch(`${baseURL}/models`, {
-			headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
-		});
-		logger.info({ status: response.status }, "[models] First fetch status");
-		if (!response.ok && response.status === 401 && !authToken) {
-			// If we get 401 and didn't have a token, there's nothing we can do
-			throw new Error(
-				`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText} (no auth token available)`
-			);
-		}
-		if (!response.ok) {
-			throw new Error(
-				`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText}`
-			);
-		}
-		const json = await response.json();
-		logger.info({ keys: Object.keys(json || {}) }, "[models] Response keys");
-
-		const parsed = listSchema.parse(json);
-		logger.info({ count: parsed.data.length }, "[models] Parsed models count");
-
-		let modelsRaw = parsed.data.map((m) => {
-			let logoUrl: string | undefined = undefined;
-			if (isHFRouter && m.id.includes("/")) {
-				const org = m.id.split("/")[0];
-				logoUrl = `https://huggingface.co/api/organizations/${encodeURIComponent(org)}/avatar?redirect=true`;
-			}
-
-			const inputModalities = (m.architecture?.input_modalities ?? []).map((modality) =>
-				modality.toLowerCase()
-			);
-			const supportsImageInput =
-				inputModalities.includes("image") || inputModalities.includes("vision");
-
-			// If any provider supports tools, consider the model as supporting tools
-			const supportsTools = Boolean((m.providers ?? []).some((p) => p?.supports_tools === true));
-			return {
-				id: m.id,
-				name: m.id,
-				displayName: m.id,
-				description: m.description,
-				logoUrl,
-				providers: m.providers,
-				multimodal: supportsImageInput,
-				multimodalAcceptedMimetypes: supportsImageInput ? ["image/*"] : undefined,
-				supportsTools,
-				endpoints: [
-					{
-						type: "openai" as const,
-						baseURL,
-						// apiKey will be taken from OPENAI_API_KEY or HF_TOKEN automatically
-					},
-				],
-			} as ModelConfig;
-		}) as ModelConfig[];
-
+		// Check if MODELS environment variable is defined with specific models
 		const overrides = getModelOverrides();
+		let modelsRaw: ModelConfig[];
 
-		if (overrides.length) {
-			const overrideMap = new Map<string, ModelOverride>();
-			for (const override of overrides) {
-				for (const key of [override.id, override.name]) {
-					const trimmed = key?.trim();
-					if (trimmed) overrideMap.set(trimmed, override);
-				}
-			}
+		if (overrides.length > 0) {
+			// Use ONLY the models defined in MODELS env variable
+			logger.info(
+				{ count: overrides.length },
+				"[models] Using models from MODELS environment variable"
+			);
 
-			modelsRaw = modelsRaw.map((model) => {
-				const override = overrideMap.get(model.id ?? "") ?? overrideMap.get(model.name ?? "");
-				if (!override) return model;
-
-				const { id, name, ...rest } = override;
-				void id;
-				void name;
-
-				return {
-					...model,
-					...rest,
+			modelsRaw = overrides.map((override) => {
+				// Create a base model config from the override
+				const modelConfig: ModelConfig = {
+					id: override.id || override.name || "",
+					name: override.name || override.id || "",
+					displayName: override.displayName || override.name || override.id || "",
+					description: override.description || "",
+					logoUrl: override.logoUrl,
+					websiteUrl: override.websiteUrl,
+					modelUrl: override.modelUrl,
+					datasetName: override.datasetName,
+					datasetUrl: override.datasetUrl,
+					preprompt: override.preprompt || "",
+					prepromptUrl: override.prepromptUrl,
+					promptExamples: override.promptExamples,
+					endpoints: override.endpoints || [
+						{
+							type: "openai" as const,
+							baseURL,
+							// apiKey will be taken from OPENAI_API_KEY or HF_TOKEN automatically
+						},
+					],
+					providers: override.providers,
+					parameters: override.parameters,
+					multimodal: override.multimodal ?? false,
+					multimodalAcceptedMimetypes: override.multimodalAcceptedMimetypes,
+					supportsTools: override.supportsTools ?? false,
+					unlisted: override.unlisted ?? false,
+					systemRoleSupported: override.systemRoleSupported ?? true,
 				};
+				return modelConfig;
 			});
+		} else {
+			// Fallback: Fetch from OpenRouter API if no MODELS defined
+			logger.info("[models] No MODELS defined, fetching from OpenRouter API");
+
+			// Canonical auth token is OPENAI_API_KEY; keep HF_TOKEN as legacy alias
+			const authToken = config.OPENAI_API_KEY || config.HF_TOKEN;
+
+			// Use auth token from the start if available to avoid rate limiting issues
+			// Some APIs rate-limit unauthenticated requests more aggressively
+			const response = await fetch(`${baseURL}/models`, {
+				headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+			});
+			logger.info({ status: response.status }, "[models] First fetch status");
+			if (!response.ok && response.status === 401 && !authToken) {
+				// If we get 401 and didn't have a token, there's nothing we can do
+				throw new Error(
+					`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText} (no auth token available)`
+				);
+			}
+			if (!response.ok) {
+				throw new Error(
+					`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText}`
+				);
+			}
+			const json = await response.json();
+			logger.info({ keys: Object.keys(json || {}) }, "[models] Response keys");
+
+			const parsed = listSchema.parse(json);
+			logger.info({ count: parsed.data.length }, "[models] Parsed models count");
+
+			modelsRaw = parsed.data.map((m) => {
+				let logoUrl: string | undefined = undefined;
+				if (isHFRouter && m.id.includes("/")) {
+					const org = m.id.split("/")[0];
+					logoUrl = `https://huggingface.co/api/organizations/${encodeURIComponent(org)}/avatar?redirect=true`;
+				}
+
+				const inputModalities = (m.architecture?.input_modalities ?? []).map((modality) =>
+					modality.toLowerCase()
+				);
+				const supportsImageInput =
+					inputModalities.includes("image") || inputModalities.includes("vision");
+
+				// If any provider supports tools, consider the model as supporting tools
+				const supportsTools = Boolean((m.providers ?? []).some((p) => p?.supports_tools === true));
+				return {
+					id: m.id,
+					name: m.id,
+					displayName: m.id,
+					description: m.description,
+					logoUrl,
+					providers: m.providers,
+					multimodal: supportsImageInput,
+					multimodalAcceptedMimetypes: supportsImageInput ? ["image/*"] : undefined,
+					supportsTools,
+					endpoints: [
+						{
+							type: "openai" as const,
+							baseURL,
+							// apiKey will be taken from OPENAI_API_KEY or HF_TOKEN automatically
+						},
+					],
+				} as ModelConfig;
+			}) as ModelConfig[];
 		}
 
 		const builtModels = await Promise.all(
