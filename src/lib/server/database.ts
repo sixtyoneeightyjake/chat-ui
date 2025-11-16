@@ -33,9 +33,14 @@ export class Database {
 	private static instance: Database;
 
 	private async init() {
-		const DB_FOLDER =
-			config.MONGO_STORAGE_PATH ||
-			join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), "db");
+		// Determine database folder path
+		// On Vercel/serverless environments, only /tmp is writable
+		const isVercel = process.env.VERCEL === "1";
+		const defaultDbPath = isVercel
+			? "/tmp/db"
+			: join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), "db");
+
+		const DB_FOLDER = config.MONGO_STORAGE_PATH || defaultDbPath;
 
 		if (!config.MONGODB_URL) {
 			logger.warn("No MongoDB URL found, using in-memory server");
