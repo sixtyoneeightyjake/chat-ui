@@ -35,14 +35,14 @@ const SECRET_CONFIG =
 let full_config = `${PUBLIC_CONFIG}\n${SECRET_CONFIG}`;
 
 // replace the internal proxy url with the public endpoint
-full_config = full_config.replaceAll(
-	"https://internal.api-inference.huggingface.co",
+full_config = full_config.replace(
+	/https:\/\/internal\.api-inference\.huggingface\.co/g,
 	"https://router.huggingface.co/hf-inference"
 );
 
-full_config = full_config.replaceAll("COOKIE_SECURE=`true`", "COOKIE_SECURE=`false`");
-full_config = full_config.replaceAll("LOG_LEVEL=`debug`", "LOG_LEVEL=`info`");
-full_config = full_config.replaceAll("NODE_ENV=`prod`", "NODE_ENV=`development`");
+full_config = full_config.replace(/COOKIE_SECURE=`true`/g, "COOKIE_SECURE=`false`");
+full_config = full_config.replace(/LOG_LEVEL=`debug`/g, "LOG_LEVEL=`info`");
+full_config = full_config.replace(/NODE_ENV=`prod`/g, "NODE_ENV=`development`");
 
 // Write full_config to .env.local
 fs.writeFileSync(".env.local", full_config);
