@@ -3,11 +3,12 @@
 A chat interface for LLMs powered by OpenRouter. This is a SvelteKit app configured for internal use with OpenRouter's Sherlock models.
 
 0. [Quickstart](#quickstart)
-1. [Database Options](#database-options)
-2. [Launch](#launch)
-3. [Optional Docker Image](#optional-docker-image)
-4. [Extra parameters](#extra-parameters)
-5. [Building](#building)
+1. [Deployment](#deployment)
+2. [Database Options](#database-options)
+3. [Launch](#launch)
+4. [Optional Docker Image](#optional-docker-image)
+5. [Extra parameters](#extra-parameters)
+6. [Building](#building)
 
 > [!NOTE]
 > Chat UI only supports OpenAI-compatible APIs via `OPENAI_BASE_URL` and the `/models` endpoint. Provider-specific integrations (legacy `MODELS` env var, GGUF discovery, embeddings, web-search helpers, etc.) are removed, but any service that speaks the OpenAI protocol (llama.cpp server, Ollama, OpenRouter, etc. will work by default).
@@ -44,6 +45,35 @@ npm run dev -- --open
 ```
 
 You now have the chat interface running against OpenRouter.
+
+## Deployment
+
+This app is configured for **Vercel** deployment with **MongoDB Atlas** as the database.
+
+### Quick Deploy to Vercel
+
+1. **Prerequisites:**
+   - Push your code to GitHub
+   - Get an OpenRouter API key from [openrouter.ai](https://openrouter.ai)
+   - Create a free MongoDB Atlas cluster at [mongodb.com](https://www.mongodb.com/cloud/atlas/register)
+
+2. **Deploy:**
+   - Import your GitHub repo to Vercel
+   - Add environment variables in Vercel dashboard:
+     - `OPENAI_BASE_URL=https://openrouter.ai/api/v1`
+     - `OPENAI_API_KEY=sk-or-v1-...`
+     - `MONGODB_URL=mongodb+srv://...` (from Atlas)
+   - Redeploy and you're live!
+
+📚 **Full deployment guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed step-by-step instructions.
+
+### Other Hosting Options
+
+While this app is optimized for Vercel, it can also be deployed to:
+- **Railway** - Simple Node.js hosting with built-in MongoDB
+- **Render** - Free tier with auto-deploy from GitHub
+- **Fly.io** - Global edge deployment
+- **Any Node.js host** - Switch to `@sveltejs/adapter-node` in `svelte.config.js`
 
 ## Database Options
 
