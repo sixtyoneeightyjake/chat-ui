@@ -158,9 +158,26 @@ const getModelOverrides = (): ModelOverride[] => {
 	}
 
 	try {
-		return z.array(overrideEntrySchema).parse(JSON5.parse(sanitizeJSONEnv(overridesEnv, "[]")));
+		const sanitized = sanitizeJSONEnv(overridesEnv, "[]");
+
+		// Check for common malformed patterns
+		if (sanitized === "[" || sanitized === "{" || sanitized.trim() === "") {
+			logger.warn(
+				"[models] MODELS environment variable is incomplete or malformed. Using empty array. " +
+				"In Vercel, check that the environment variable is properly formatted as a JSON array."
+			);
+			return [];
+		}
+
+		const parsed = JSON5.parse(sanitized);
+		return z.array(overrideEntrySchema).parse(parsed);
 	} catch (error) {
-		logger.error(error, "[models] Failed to parse MODELS overrides");
+		logger.error(
+			error,
+			"[models] Failed to parse MODELS overrides. " +
+			"Ensure the MODELS environment variable is valid JSON5. " +
+			"Example: MODELS=[{\"id\":\"model-1\",\"name\":\"Model 1\"}]"
+		);
 		return [];
 	}
 };
