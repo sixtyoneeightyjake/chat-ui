@@ -16,3 +16,4 @@ db
 models/*
 !models/add-your-models-here.txt
 .vercel
+.env*.local
