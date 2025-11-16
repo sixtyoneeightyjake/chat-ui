@@ -1,15 +1,14 @@
-# Chat UI
+# sixtyoneeighty
 
-![Chat UI repository thumbnail](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/chat-ui/chat-ui-2026.png)
-
-A chat interface for LLMs. It is a SvelteKit app and it powers the [HuggingChat app on hf.co/chat](https://huggingface.co/chat).
+A chat interface for LLMs powered by OpenRouter. This is a SvelteKit app configured for internal use with OpenRouter's Sherlock models.
 
 0. [Quickstart](#quickstart)
-1. [Database Options](#database-options)
-2. [Launch](#launch)
-3. [Optional Docker Image](#optional-docker-image)
-4. [Extra parameters](#extra-parameters)
-5. [Building](#building)
+1. [Deployment](#deployment)
+2. [Database Options](#database-options)
+3. [Launch](#launch)
+4. [Optional Docker Image](#optional-docker-image)
+5. [Extra parameters](#extra-parameters)
+6. [Building](#building)
 
 > [!NOTE]
 > Chat UI only supports OpenAI-compatible APIs via `OPENAI_BASE_URL` and the `/models` endpoint. Provider-specific integrations (legacy `MODELS` env var, GGUF discovery, embeddings, web-search helpers, etc.) are removed, but any service that speaks the OpenAI protocol (llama.cpp server, Ollama, OpenRouter, etc. will work by default).
@@ -19,41 +18,62 @@ A chat interface for LLMs. It is a SvelteKit app and it powers the [HuggingChat 
 
 ## Quickstart
 
-Chat UI speaks to OpenAI-compatible APIs only. The fastest way to get running is with the Hugging Face Inference Providers router plus your personal Hugging Face access token.
+This chat UI is configured to work exclusively with OpenRouter's Sherlock models.
 
 **Step 1 – Create `.env.local`:**
 
 ```env
-OPENAI_BASE_URL=https://router.huggingface.co/v1
-OPENAI_API_KEY=hf_************************
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=sk-or-v1-************************
 # Fill in once you pick a database option below
 MONGODB_URL=
 ```
 
-`OPENAI_API_KEY` can come from any OpenAI-compatible endpoint you plan to call. Pick the combo that matches your setup and drop the values into `.env.local`:
+The configuration uses two OpenRouter models:
+- **openrouter/sherlock-think-alpha** - Main default model for reasoning tasks
+- **openrouter/sherlock-dash-alpha** - Fast model for quick responses and internal tasks
 
-| Provider                                      | Example `OPENAI_BASE_URL`          | Example key env                                                         |
-| --------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
-| Hugging Face Inference Providers router       | `https://router.huggingface.co/v1` | `OPENAI_API_KEY=hf_xxx` (or `HF_TOKEN` legacy alias)                    |
-| llama.cpp server (`llama.cpp --server --api`) | `http://127.0.0.1:8080/v1`         | `OPENAI_API_KEY=sk-local-demo` (any string works; llama.cpp ignores it) |
-| Ollama (with OpenAI-compatible bridge)        | `http://127.0.0.1:11434/v1`        | `OPENAI_API_KEY=ollama`                                                 |
-| OpenRouter                                    | `https://openrouter.ai/api/v1`     | `OPENAI_API_KEY=sk-or-v1-...`                                           |
-| Poe                                           | `https://api.poe.com/v1`           | `OPENAI_API_KEY=pk_...`                                                 |
-
-Check the root [`.env` template](./.env) for the full list of optional variables you can override.
+Check the root [`.env` template](./.env) for the full configuration including model overrides.
 
 **Step 2 – Choose where MongoDB lives:** Either provision a managed cluster (for example MongoDB Atlas) or run a local container. Both approaches are described in [Database Options](#database-options). After you have the URI, drop it into `MONGODB_URL` (and, if desired, set `MONGODB_DB_NAME`).
 
 **Step 3 – Install and launch the dev server:**
 
 ```bash
-git clone https://github.com/huggingface/chat-ui
-cd chat-ui
 npm install
 npm run dev -- --open
 ```
 
-You now have Chat UI running against the Hugging Face router without needing to host MongoDB yourself.
+You now have the chat interface running against OpenRouter.
+
+## Deployment
+
+This app is configured for **Vercel** deployment with **MongoDB Atlas** as the database.
+
+### Quick Deploy to Vercel
+
+1. **Prerequisites:**
+   - Push your code to GitHub
+   - Get an OpenRouter API key from [openrouter.ai](https://openrouter.ai)
+   - Create a free MongoDB Atlas cluster at [mongodb.com](https://www.mongodb.com/cloud/atlas/register)
+
+2. **Deploy:**
+   - Import your GitHub repo to Vercel
+   - Add environment variables in Vercel dashboard:
+     - `OPENAI_BASE_URL=https://openrouter.ai/api/v1`
+     - `OPENAI_API_KEY=sk-or-v1-...`
+     - `MONGODB_URL=mongodb+srv://...` (from Atlas)
+   - Redeploy and you're live!
+
+📚 **Full deployment guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed step-by-step instructions.
+
+### Other Hosting Options
+
+While this app is optimized for Vercel, it can also be deployed to:
+- **Railway** - Simple Node.js hosting with built-in MongoDB
+- **Render** - Free tier with auto-deploy from GitHub
+- **Fly.io** - Global edge deployment
+- **Any Node.js host** - Switch to `@sveltejs/adapter-node` in `svelte.config.js`
 
 ## Database Options
 
@@ -97,8 +117,8 @@ Prefer containerized setup? You can run everything in one container as long as y
 docker run \
   -p 3000 \
   -e MONGODB_URL=mongodb://host.docker.internal:27017 \
-  -e OPENAI_BASE_URL=https://router.huggingface.co/v1 \
-  -e OPENAI_API_KEY=hf_*** \
+  -e OPENAI_BASE_URL=https://openrouter.ai/api/v1 \
+  -e OPENAI_API_KEY=sk-or-v1-*** \
   -v db:/data \
   ghcr.io/huggingface/chat-ui-db:latest
 ```
@@ -109,22 +129,26 @@ docker run \
 
 ### Theming
 
-You can use a few environment variables to customize the look and feel of chat-ui. These are by default:
+The app is configured with custom branding:
 
 ```env
-PUBLIC_APP_NAME=ChatUI
+PUBLIC_APP_NAME=sixtyoneeighty
 PUBLIC_APP_ASSETS=chatui
-PUBLIC_APP_DESCRIPTION="Making the community's best AI chat models available to everyone."
-PUBLIC_APP_DATA_SHARING=
+PUBLIC_APP_DESCRIPTION="Internal AI chat interface powered by OpenRouter."
 ```
 
-- `PUBLIC_APP_NAME` The name used as a title throughout the app.
-- `PUBLIC_APP_ASSETS` Is used to find logos & favicons in `static/$PUBLIC_APP_ASSETS`, current options are `chatui` and `huggingchat`.
-- `PUBLIC_APP_DATA_SHARING` Can be set to 1 to add a toggle in the user settings that lets your users opt-in to data sharing with models creator.
+- `PUBLIC_APP_NAME` The name used as a title throughout the app ("sixtyoneeighty").
+- `PUBLIC_APP_ASSETS` Uses the `chatui` asset directory in `static/chatui` for logos & favicons.
+- `PUBLIC_APP_DESCRIPTION` Description shown in meta tags and throughout the app.
 
 ### Models
 
-This build does not use the `MODELS` env var or GGUF discovery. Configure models via `OPENAI_BASE_URL` only; Chat UI will fetch `${OPENAI_BASE_URL}/models` and populate the list automatically. Authorization uses `OPENAI_API_KEY` (preferred). `HF_TOKEN` remains a legacy alias.
+This installation is configured to use specific OpenRouter models via the `MODELS` override. The two Sherlock models are:
+
+- **Sherlock Think Alpha** (`openrouter/sherlock-think-alpha`) - Main default model
+- **Sherlock Dash Alpha** (`openrouter/sherlock-dash-alpha`) - Fast model
+
+The `TASK_MODEL` is set to use the fast Sherlock Dash model for internal operations like title generation.
 
 ### LLM Router (Optional)
 
