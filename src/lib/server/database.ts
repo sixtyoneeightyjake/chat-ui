@@ -33,12 +33,34 @@ export class Database {
 	private static instance: Database;
 
 	private async init() {
-		const DB_FOLDER =
-			config.MONGO_STORAGE_PATH ||
-			join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), "db");
+		// Check if running on Vercel or other serverless platforms
+		const isVercel = process.env.VERCEL === "1";
+		const isServerless = isVercel || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 		if (!config.MONGODB_URL) {
-			logger.warn("No MongoDB URL found, using in-memory server");
+			// Fail fast on serverless platforms
+			if (isServerless) {
+				const error = new Error(
+					"❌ MONGODB_URL is required for serverless deployments (Vercel, AWS Lambda, etc.)\n\n" +
+					"In-memory MongoDB cannot work on serverless platforms because:\n" +
+					"  - Filesystem is read-only (except /tmp which doesn't persist)\n" +
+					"  - Each function invocation is stateless\n" +
+					"  - No persistent storage between requests\n\n" +
+					"Solutions:\n" +
+					"  1. MongoDB Atlas (recommended): https://www.mongodb.com/cloud/atlas\n" +
+					"  2. Other serverless databases: Vercel Postgres, Supabase, PlanetScale, Neon\n\n" +
+					"To fix: Set the MONGODB_URL environment variable in your Vercel project settings."
+				);
+				logger.error(error.message);
+				throw error;
+			}
+
+			// Only use in-memory server for local development
+			logger.warn("No MongoDB URL found, using in-memory server (local development only)");
+
+			const DB_FOLDER =
+				config.MONGO_STORAGE_PATH ||
+				join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), "db");
 
 			logger.info(`Using database path: ${DB_FOLDER}`);
 			// Create db directory if it doesn't exist
