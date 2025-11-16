@@ -74,6 +74,7 @@
 		"@iconify-json/bi": "^1.1.21",
 		"@modelcontextprotocol/sdk": "^1.21.1",
 		"@resvg/resvg-js": "^2.6.2",
+		"@vercel/functions": "^3.3.2",
 		"autoprefixer": "^10.4.14",
 		"aws4": "^1.13.2",
 		"bits-ui": "^2.14.2",
