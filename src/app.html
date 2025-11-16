@@ -9,8 +9,9 @@
 				try {
 					var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 					var stored = localStorage.getItem("theme");
-					var followSystem = stored === null || stored === "system";
-					var isDark = stored === "dark" || (followSystem && prefersDark);
+					// Default to dark theme if no preference is stored
+					var followSystem = stored === "system";
+					var isDark = stored === null || stored === "dark" || (followSystem && prefersDark);
 					if (isDark) {
 						document.documentElement.classList.add("dark");
 						document.querySelector('meta[name="theme-color"]').setAttribute("content", "#07090d");
