@@ -38,7 +38,8 @@ class ConfigManager {
 	}
 
 	get ConfigManagerEnabled() {
-		return serverEnv.ENABLE_CONFIG_MANAGER === "true" && import.meta.env.MODE !== "test";
+		const enabled = serverEnv.ENABLE_CONFIG_MANAGER || process.env.ENABLE_CONFIG_MANAGER;
+		return enabled === "true" && import.meta.env.MODE !== "test";
 	}
 
 	get isHuggingChat() {
@@ -77,9 +78,9 @@ class ConfigManager {
 
 	get(key: ConfigKey): string {
 		if (!this.ConfigManagerEnabled) {
-			return keysFromEnv[key] || "";
+			return keysFromEnv[key] || process.env[key] || "";
 		}
-		return this.keysFromDB[key] || keysFromEnv[key] || "";
+		return this.keysFromDB[key] || keysFromEnv[key] || process.env[key] || "";
 	}
 
 	async updateSemaphore() {
