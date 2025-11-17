@@ -11,6 +11,7 @@
 	import CarbonView from "~icons/carbon/view";
 	import CarbonTools from "~icons/carbon/tools";
 	import IconGear from "~icons/bi/gear-fill";
+	import CarbonLogout from "~icons/carbon/logout";
 
 	import type { LayoutData } from "../$types";
 	import { browser } from "$app/environment";
@@ -223,6 +224,18 @@
 				<IconGear class="mr-0.5 text-xxs" />
 				Application Settings
 			</button>
+
+			<!-- Sign Out Button -->
+			<form method="POST" action="{base}/auth/signout" class="mt-2">
+				<button
+					type="submit"
+					class="group flex h-9 w-full flex-none items-center gap-1 rounded-lg px-3 text-[13px] text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 md:rounded-xl md:px-3"
+					aria-label="Sign out"
+				>
+					<CarbonLogout class="mr-0.5 text-xxs" />
+					Sign Out
+				</button>
+			</form>
 		</div>
 	{/if}
 	{#if showContent}
