@@ -2,6 +2,7 @@
 /// <reference types="unplugin-icons/types/svelte" />
 
 import type { User } from "$lib/types/User";
+import type { Session } from "@auth/core/types";
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
@@ -11,8 +12,9 @@ declare global {
 		interface Locals {
 			sessionId: string;
 			user?: User;
-			isAdmin: boolean;
+			isAdmin?: boolean;
 			token?: string;
+			getSession(): Promise<Session | null>;
 		}
 
 		interface Error {

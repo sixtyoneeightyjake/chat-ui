@@ -17,3 +17,5 @@ models/*
 !models/add-your-models-here.txt
 .vercel
 .env*.local
+logs/logs_result (4).csv
+logs/logs_result (6).csv

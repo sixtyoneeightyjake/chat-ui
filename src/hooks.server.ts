@@ -2,14 +2,8 @@ import { config, ready } from "$lib/server/config";
 import type { Handle, HandleServerError, ServerInit, HandleFetch } from "@sveltejs/kit";
 import { collections } from "$lib/server/database";
 import { base } from "$app/paths";
-import {
-	authenticateRequest,
-	loginEnabled,
-	refreshSessionCookie,
-	triggerOauthFlow,
-} from "$lib/server/auth";
+import { handle as authHandle } from "$lib/server/authjs";
 import { ERROR_MESSAGES } from "$lib/stores/errors";
-import { addWeeks } from "date-fns";
 import { checkAndRunMigrations } from "$lib/migrations/migrations";
 import { building, dev } from "$app/environment";
 import { logger } from "$lib/server/logger";
@@ -20,6 +14,9 @@ import { adminTokenManager } from "$lib/server/adminToken";
 import { isHostLocalhost } from "$lib/server/isURLLocal";
 import { MetricsServer } from "$lib/server/metrics";
 import { loadMcpServersOnStartup } from "$lib/server/mcp/registry";
+import { sequence } from "@sveltejs/kit/hooks";
+import { redirect } from "@sveltejs/kit";
+import { ObjectId } from "mongodb";
 
 export const init: ServerInit = async () => {
 	// Wait for config to be fully loaded
@@ -99,7 +96,8 @@ export const handleError: HandleServerError = async ({ error, event, status, mes
 	};
 };
 
-export const handle: Handle = async ({ event, resolve }) => {
+// Custom handle for authentication enforcement
+const authCheckHandle: Handle = async ({ event, resolve }) => {
 	await ready.then(() => {
 		config.checkForUpdates();
 	});
@@ -123,6 +121,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	// Admin API protection
 	if (event.url.pathname.startsWith(`${base}/admin/`) || event.url.pathname === `${base}/admin`) {
 		const ADMIN_SECRET = config.ADMIN_API_SECRET || config.PARQUET_EXPORT_SECRET;
 
@@ -135,56 +134,43 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const auth = await authenticateRequest(
-		{ type: "svelte", value: event.request.headers },
-		{ type: "svelte", value: event.cookies }
-	);
+	// Public routes that don't require authentication
+	const publicRoutes = [
+		`${base}/auth/signin`,
+		`${base}/healthcheck`,
+	];
 
-	event.locals.sessionId = auth.sessionId;
+	const isPublicRoute = publicRoutes.some(route => event.url.pathname.startsWith(route));
 
-	if (loginEnabled && !auth.user) {
-		if (config.AUTOMATIC_LOGIN === "true") {
-			// AUTOMATIC_LOGIN: always redirect to OAuth flow (unless already on login or healthcheck pages)
-			if (
-				!event.url.pathname.startsWith(`${base}/login`) &&
-				!event.url.pathname.startsWith(`${base}/healthcheck`)
-			) {
-				// To get the same CSRF token after callback
-				refreshSessionCookie(event.cookies, auth.secretSessionId);
-				return await triggerOauthFlow({
-					request: event.request,
-					url: event.url,
-					locals: event.locals,
-				});
-			}
-		} else {
-			// Redirect to OAuth flow unless on the authorized pages (home, shared conversation, login, healthcheck, model thumbnails)
-			if (
-				event.url.pathname !== `${base}/` &&
-				event.url.pathname !== `${base}` &&
-				!event.url.pathname.startsWith(`${base}/login`) &&
-				!event.url.pathname.startsWith(`${base}/login/callback`) &&
-				!event.url.pathname.startsWith(`${base}/healthcheck`) &&
-				!event.url.pathname.startsWith(`${base}/r/`) &&
-				!event.url.pathname.startsWith(`${base}/conversation/`) &&
-				!event.url.pathname.startsWith(`${base}/models/`) &&
-				!event.url.pathname.startsWith(`${base}/api`)
-			) {
-				refreshSessionCookie(event.cookies, auth.secretSessionId);
-				return triggerOauthFlow({ request: event.request, url: event.url, locals: event.locals });
-			}
-		}
+	// Check if user is authenticated via Auth.js
+	const session = await event.locals.getSession();
+
+	if (!session && !isPublicRoute) {
+		// Redirect to sign-in page with callback URL
+		throw redirect(303, `${base}/auth/signin?callbackUrl=${encodeURIComponent(event.url.pathname + event.url.search)}`);
 	}
 
-	event.locals.user = auth.user || undefined;
-	event.locals.token = auth.token;
+	// Attach user info to locals if session exists
+	if (session?.user) {
+		// Convert session user ID to ObjectId (or create one based on the ID)
+		const userId = ObjectId.isValid(session.user.id)
+			? new ObjectId(session.user.id)
+			: new ObjectId();
 
-	event.locals.isAdmin =
-		event.locals.user?.isAdmin || adminTokenManager.isAdmin(event.locals.sessionId);
+		event.locals.user = {
+			_id: userId,
+			email: session.user.email || "",
+			name: session.user.name || "",
+			avatarUrl: session.user.image || "",
+			hfUserId: session.user.id,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+		event.locals.sessionId = session.user.id;
+	}
 
 	// CSRF protection
 	const requestContentType = event.request.headers.get("content-type")?.split(";")[0] ?? "";
-	/** https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form#attr-enctype */
 	const nativeFormContentTypes = [
 		"multipart/form-data",
 		"application/x-www-form-urlencoded",
@@ -210,41 +196,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	if (
-		event.request.method === "POST" ||
-		event.url.pathname.startsWith(`${base}/login`) ||
-		event.url.pathname.startsWith(`${base}/login/callback`)
-	) {
-		// if the request is a POST request or login-related we refresh the cookie
-		refreshSessionCookie(event.cookies, auth.secretSessionId);
-
-		await collections.sessions.updateOne(
-			{ sessionId: auth.sessionId },
-			{ $set: { updatedAt: new Date(), expiresAt: addWeeks(new Date(), 2) } }
-		);
-	}
-
-	if (
-		loginEnabled &&
-		!event.locals.user &&
-		!event.url.pathname.startsWith(`${base}/login`) &&
-		!event.url.pathname.startsWith(`${base}/admin`) &&
-		!event.url.pathname.startsWith(`${base}/settings`) &&
-		!["GET", "OPTIONS", "HEAD"].includes(event.request.method)
-	) {
-		return errorResponse(401, ERROR_MESSAGES.authOnly);
-	}
-
 	let replaced = false;
 
 	const response = await resolve(event, {
 		transformPageChunk: (chunk) => {
-			// For some reason, Sveltekit doesn't let us load env variables from .env in the app.html template
 			if (replaced || !chunk.html.includes("%gaId%")) {
 				return chunk.html;
 			}
 			replaced = true;
-
 			return chunk.html.replace("%gaId%", config.PUBLIC_GOOGLE_ANALYTICS_ID);
 		},
 		filterSerializedResponseHeaders: (header) => {
@@ -257,28 +216,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 		response.headers.append("Content-Security-Policy", "frame-ancestors 'none';");
 	}
 
-	if (
-		event.url.pathname.startsWith(`${base}/login/callback`) ||
-		event.url.pathname.startsWith(`${base}/login`)
-	) {
-		response.headers.append("Cache-Control", "no-store");
-	}
-
+	// API CORS headers
 	if (event.url.pathname.startsWith(`${base}/api/`)) {
-		// get origin from the request
 		const requestOrigin = event.request.headers.get("origin");
-
-		// get origin from the config if its defined
 		let allowedOrigin = config.PUBLIC_ORIGIN ? new URL(config.PUBLIC_ORIGIN).origin : undefined;
 
 		if (
-			dev || // if we're in dev mode
-			!requestOrigin || // or the origin is null (SSR)
-			isHostLocalhost(new URL(requestOrigin).hostname) // or the origin is localhost
+			dev ||
+			!requestOrigin ||
+			isHostLocalhost(new URL(requestOrigin).hostname)
 		) {
-			allowedOrigin = "*"; // allow all origins
+			allowedOrigin = "*";
 		} else if (allowedOrigin === requestOrigin) {
-			allowedOrigin = requestOrigin; // echo back the caller
+			allowedOrigin = requestOrigin;
 		}
 
 		if (allowedOrigin) {
@@ -290,8 +240,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 		}
 	}
+
 	return response;
 };
+
+// Sequence the Auth.js handle with our custom auth check
+export const handle: Handle = sequence(authHandle, authCheckHandle);
 
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	if (isHostLocalhost(new URL(request.url).hostname)) {
