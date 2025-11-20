@@ -257,7 +257,7 @@
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Portal>
 							<DropdownMenu.Content
-								class="z-50 rounded-xl border border-gray-200 bg-white/95 p-1 text-gray-800 shadow-lg backdrop-blur dark:border-gray-700/60 dark:bg-gray-800/95 dark:text-gray-100"
+								class="z-50 rounded-xl border border-gray-200 bg-white/95 p-1.5 text-gray-800 shadow-premium backdrop-blur-md dark:border-premium-red/20 dark:bg-premium-dark-grey/95 dark:text-gray-100 animate-slide-up"
 								side="top"
 								sideOffset={8}
 								align="start"
@@ -267,7 +267,7 @@
 							>
 								{#if modelIsMultimodal}
 									<DropdownMenu.Item
-										class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-gray-100 focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-white/10"
+										class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-premium-red/10 data-[highlighted]:text-premium-red focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-premium-red-dark/20 dark:data-[highlighted]:text-premium-red-light transition-colors duration-200"
 										onSelect={() => openFilePickerImage()}
 									>
 										<CarbonImage class="size-4 opacity-90 dark:opacity-80" />
@@ -277,7 +277,7 @@
 
 								<DropdownMenu.Sub>
 									<DropdownMenu.SubTrigger
-										class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-gray-100 data-[state=open]:bg-gray-100 focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-white/10 dark:data-[state=open]:bg-white/10"
+										class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-premium-red/10 data-[highlighted]:text-premium-red data-[state=open]:bg-premium-red/10 data-[state=open]:text-premium-red focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-premium-red-dark/20 dark:data-[highlighted]:text-premium-red-light dark:data-[state=open]:bg-premium-red-dark/20 dark:data-[state=open]:text-premium-red-light transition-colors duration-200"
 									>
 										<div class="flex items-center gap-1">
 											<CarbonDocument class="size-4 opacity-90 dark:opacity-80" />
@@ -288,14 +288,14 @@
 										</div>
 									</DropdownMenu.SubTrigger>
 									<DropdownMenu.SubContent
-										class="z-50 rounded-xl border border-gray-200 bg-white/95 p-1 text-gray-800 shadow-lg backdrop-blur dark:border-gray-700/60 dark:bg-gray-800/95 dark:text-gray-100"
+										class="z-50 rounded-xl border border-gray-200 bg-white/95 p-1.5 text-gray-800 shadow-premium backdrop-blur-md dark:border-premium-red/20 dark:bg-premium-dark-grey/95 dark:text-gray-100 animate-slide-right"
 										sideOffset={10}
 										trapFocus={false}
 										onCloseAutoFocus={(e) => e.preventDefault()}
 										interactOutsideBehavior="defer-otherwise-close"
 									>
 										<DropdownMenu.Item
-											class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-gray-100 focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-white/10"
+											class="flex h-8 select-none items-center gap-1 rounded-md px-2 text-sm text-gray-700 data-[highlighted]:bg-premium-red/10 data-[highlighted]:text-premium-red focus-visible:outline-none dark:text-gray-200 dark:data-[highlighted]:bg-premium-red-dark/20 dark:data-[highlighted]:text-premium-red-light transition-colors duration-200"
 											onSelect={() => openFilePickerText()}
 										>
 											<CarbonUpload class="size-4 opacity-90 dark:opacity-80" />

@@ -232,9 +232,9 @@
 <BackgroundGenerationPoller />
 
 <div
-	class="fixed grid h-full w-screen grid-cols-1 grid-rows-[auto,1fr] overflow-hidden text-smd {!isNavCollapsed
+	class="fixed grid h-full w-screen grid-cols-1 grid-rows-[auto,1fr] overflow-hidden text-smd bg-gray-50 dark:bg-premium-black {!isNavCollapsed
 		? 'md:grid-cols-[290px,1fr]'
-		: 'md:grid-cols-[0px,1fr]'} transition-[300ms] [transition-property:grid-template-columns] dark:text-gray-300 md:grid-rows-[1fr]"
+		: 'md:grid-cols-[0px,1fr]'} transition-all duration-300 ease-in-out [transition-property:grid-template-columns] dark:text-gray-100 md:grid-rows-[1fr]"
 >
 	<ExpandNavigation
 		isCollapsed={isNavCollapsed}
@@ -247,7 +247,7 @@
 	{#if canShare}
 		<button
 			type="button"
-			class="hidden size-8 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white/90 text-sm font-medium text-gray-700 shadow-sm hover:bg-white/60 hover:text-gray-500 dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-700 md:absolute md:right-6 md:top-5 md:flex
+			class="hidden size-8 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white/90 text-sm font-medium text-gray-700 shadow-lg hover:shadow-premium-hover hover:bg-premium-red/10 hover:text-premium-red hover:border-premium-red/30 dark:border-gray-800 dark:bg-premium-dark-grey/90 dark:text-gray-200 dark:hover:bg-premium-red-dark/20 dark:hover:border-premium-red-light/30 dark:hover:text-premium-red-light md:absolute md:right-6 md:top-5 md:flex transition-all duration-300 hover:scale-105 active:scale-95
 				{$loading ? 'cursor-not-allowed opacity-40' : ''}"
 			onclick={() => shareModal.open()}
 			aria-label="Share conversation"
@@ -266,7 +266,7 @@
 		/>
 	</MobileNav>
 	<nav
-		class="grid max-h-screen grid-cols-1 grid-rows-[auto,1fr,auto] overflow-hidden *:w-[290px] max-md:hidden"
+		class="grid max-h-screen grid-cols-1 grid-rows-[auto,1fr,auto] overflow-hidden *:w-[290px] max-md:hidden bg-white dark:bg-premium-dark-grey border-r border-gray-200 dark:border-gray-800 shadow-lg"
 	>
 		<NavMenu
 			{conversations}
