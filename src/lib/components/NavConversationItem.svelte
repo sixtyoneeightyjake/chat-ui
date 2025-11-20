@@ -30,8 +30,8 @@
 		confirmDelete = false;
 	}}
 	href="{base}/conversation/{conv.id}"
-	class="group flex h-[2.15rem] flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 max-sm:h-10
-		{conv.id === page.params.id ? 'bg-gray-100 dark:bg-gray-700' : ''}"
+	class="group flex h-[2.15rem] flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-600 hover:bg-premium-red/10 hover:text-premium-red dark:text-gray-300 dark:hover:bg-premium-red-dark/20 dark:hover:text-premium-red-light max-sm:h-10 transition-all duration-200 hover:translate-x-1 hover:shadow-sm border border-transparent
+		{conv.id === page.params.id ? 'bg-premium-red/10 dark:bg-premium-red-dark/20 border-premium-red/30 dark:border-premium-red-light/30 text-premium-red dark:text-premium-red-light shadow-sm font-medium' : ''}"
 >
 	<div class="my-2 min-w-0 flex-1 truncate first-letter:uppercase">
 		<span>
@@ -54,7 +54,7 @@
 					confirmDelete = false;
 				}}
 			>
-				<CarbonClose class="text-xs text-gray-400 hover:text-gray-500 dark:hover:text-gray-300" />
+				<CarbonClose class="text-xs text-gray-400 hover:text-premium-red dark:hover:text-premium-red-light transition-colors duration-200" />
 			</button>
 			<button
 				type="button"
@@ -68,7 +68,7 @@
 				}}
 			>
 				<CarbonCheckmark
-					class="text-xs text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+					class="text-xs text-gray-400 hover:text-premium-red dark:hover:text-premium-red-light transition-colors duration-200"
 				/>
 			</button>
 		{:else}
@@ -82,7 +82,7 @@
 					renameOpen = true;
 				}}
 			>
-				<CarbonEdit class="text-xs text-gray-400 hover:text-gray-500 dark:hover:text-gray-300" />
+				<CarbonEdit class="text-xs text-gray-400 hover:text-premium-red dark:hover:text-premium-red-light transition-colors duration-200" />
 			</button>
 
 			<button
@@ -100,7 +100,7 @@
 				}}
 			>
 				<CarbonTrashCan
-					class="text-xs text-gray-400  hover:text-gray-500 dark:hover:text-gray-300"
+					class="text-xs text-gray-400 hover:text-premium-red dark:hover:text-premium-red-light transition-colors duration-200"
 				/>
 			</button>
 		{/if}

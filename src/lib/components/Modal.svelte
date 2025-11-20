@@ -69,7 +69,7 @@
 			handleBackdropClick(e);
 		}}
 		transition:fade|local={{ easing: cubicOut, duration: 300 }}
-		class="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm dark:bg-black/50"
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/85 backdrop-blur-md dark:bg-black/70"
 	>
 		{#if disableFly}
 			<div
@@ -78,13 +78,13 @@
 				bind:this={modalEl}
 				onkeydown={handleKeydown}
 				class={[
-					"scrollbar-custom relative mx-auto max-h-[95dvh] max-w-[90dvw] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-2xl outline-none dark:bg-gray-800 dark:text-gray-200",
+					"scrollbar-custom relative mx-auto max-h-[95dvh] max-w-[90dvw] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-premium-lg outline-none border-2 border-gray-200 dark:border-premium-red/30 dark:bg-premium-dark-grey dark:text-gray-100",
 					width,
 				]}
 			>
 				{#if closeButton}
-					<button class="absolute right-4 top-4 z-50" onclick={() => onclose?.()}>
-						<CarbonClose class="size-6 text-gray-700 dark:text-gray-300" />
+					<button class="absolute right-4 top-4 z-50 hover:bg-premium-red/10 rounded-full p-1 hover:scale-110 active:scale-95 transition-all duration-200 dark:hover:bg-premium-red-dark/20" onclick={() => onclose?.()}>
+						<CarbonClose class="size-6 text-gray-700 hover:text-premium-red dark:text-gray-300 dark:hover:text-premium-red-light transition-colors duration-200" />
 					</button>
 				{/if}
 				{@render children?.()}
@@ -97,13 +97,13 @@
 				onkeydown={handleKeydown}
 				in:fly={{ y: 100 }}
 				class={[
-					"scrollbar-custom relative mx-auto max-h-[95dvh] max-w-[90dvw] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-2xl outline-none dark:bg-gray-800 dark:text-gray-200",
+					"scrollbar-custom relative mx-auto max-h-[95dvh] max-w-[90dvw] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-premium-lg outline-none border-2 border-gray-200 dark:border-premium-red/30 dark:bg-premium-dark-grey dark:text-gray-100 animate-slide-up",
 					width,
 				]}
 			>
 				{#if closeButton}
-					<button class="absolute right-4 top-4 z-50" onclick={() => onclose?.()}>
-						<CarbonClose class="size-6 text-gray-700 dark:text-gray-300" />
+					<button class="absolute right-4 top-4 z-50 hover:bg-premium-red/10 rounded-full p-1 hover:scale-110 active:scale-95 transition-all duration-200 dark:hover:bg-premium-red-dark/20" onclick={() => onclose?.()}>
+						<CarbonClose class="size-6 text-gray-700 hover:text-premium-red dark:text-gray-300 dark:hover:text-premium-red-light transition-colors duration-200" />
 					</button>
 				{/if}
 				{@render children?.()}
