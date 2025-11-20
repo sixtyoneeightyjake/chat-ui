@@ -7,7 +7,7 @@ type ThemeState = {
 
 type ThemeSubscriber = (state: ThemeState) => void;
 
-let currentPreference: ThemePreference = "system";
+let currentPreference: ThemePreference = "dark";
 const subscribers = new Set<ThemeSubscriber>();
 
 function notify(preference: ThemePreference, isDark: boolean) {
@@ -24,7 +24,7 @@ export function subscribeToTheme(subscriber: ThemeSubscriber) {
 		const isDark = document.documentElement.classList.contains("dark");
 		subscriber({ preference, isDark });
 	} else {
-		subscriber({ preference: "system", isDark: false });
+		subscriber({ preference: "dark", isDark: true });
 	}
 
 	return () => {
@@ -52,8 +52,9 @@ export function getThemePreference(): ThemePreference {
 		currentPreference = raw;
 		return raw;
 	}
-	currentPreference = "system";
-	return "system";
+	// Default to dark theme
+	currentPreference = "dark";
+	return "dark";
 }
 
 /**

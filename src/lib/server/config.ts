@@ -26,6 +26,14 @@ class ConfigManager {
 			return;
 		}
 
+		// Skip database-backed config on serverless platforms to avoid circular dependency
+		// The database initialization needs config.MONGODB_URL, but config manager needs database
+		const isServerless = process.env.VERCEL === "1" || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+		if (isServerless) {
+			this.isInitialized = true;
+			return;
+		}
+
 		const { getCollectionsEarly } = await import("./database");
 		const collections = await getCollectionsEarly();
 
